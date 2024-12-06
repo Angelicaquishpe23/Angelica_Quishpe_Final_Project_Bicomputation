@@ -36,7 +36,6 @@ class ObjectDetectorHelper(
     var threshold: Float = THRESHOLD_DEFAULT,
     var maxResults: Int = MAX_RESULTS_DEFAULT,
     var currentDelegate: Int = DELEGATE_CPU,
-    var currentModel: Int = MODEL_EFFICIENTDETV0,
     var runningMode: RunningMode = RunningMode.IMAGE,
     val context: Context,
     // The listener is only used when running in RunningMode.LIVE_STREAM
@@ -78,11 +77,8 @@ class ObjectDetectorHelper(
             }
         }
 
-        val modelName = when (currentModel) {
-            MODEL_EFFICIENTDETV0 -> "efficientdet-lite0.tflite"
-            MODEL_EFFICIENTDETV2 -> "efficientdet-lite2.tflite"
-            else -> "efficientdet-lite0.tflite"
-        }
+        val modelName = "mobilenet_multi_avg.tflite"
+        baseOptionsBuilder.setModelAssetPath(modelName)
 
         baseOptionsBuilder.setModelAssetPath(modelName)
 
@@ -127,7 +123,7 @@ class ObjectDetectorHelper(
             objectDetectorListener?.onError(
                 "Object detector failed to initialize. See error logs for details"
             )
-            Log.e(TAG, "TFLite failed to load model with error: " + e.message)
+            Log.e(TAG, "Failed to load model mobilenet_multi_avg.tflite. Error: " + e.message)
         } catch (e: RuntimeException) {
             objectDetectorListener?.onError(
                 "Object detector failed to initialize. See error logs for " + "details",
@@ -346,16 +342,15 @@ class ObjectDetectorHelper(
     companion object {
         const val DELEGATE_CPU = 0
         const val DELEGATE_GPU = 1
-        const val MODEL_EFFICIENTDETV0 = 0
-        const val MODEL_EFFICIENTDETV2 = 1
-        const val MAX_RESULTS_DEFAULT = 3
-        const val THRESHOLD_DEFAULT = 0.5F
+        const val MAX_RESULTS_DEFAULT = 16
+        const val THRESHOLD_DEFAULT = 0.6F
         const val OTHER_ERROR = 0
         const val GPU_ERROR = 1
 
         const val TAG = "ObjectDetectorHelper"
     }
 
+    // MAX_RESULTS_DEFAULT is the max number of objects to be detected
     // Used to pass results or errors back to the calling class
     interface DetectorListener {
         fun onError(error: String, errorCode: Int = OTHER_ERROR)

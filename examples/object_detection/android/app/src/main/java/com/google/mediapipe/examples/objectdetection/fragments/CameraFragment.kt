@@ -85,16 +85,15 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
     override fun onPause() {
         super.onPause()
 
-        // save ObjectDetector settings
-        if(this::objectDetectorHelper.isInitialized) {
-            viewModel.setModel(objectDetectorHelper.currentModel)
+        // Save ObjectDetector settings
+        if (this::objectDetectorHelper.isInitialized) {
             viewModel.setDelegate(objectDetectorHelper.currentDelegate)
             viewModel.setThreshold(objectDetectorHelper.threshold)
             viewModel.setMaxResults(objectDetectorHelper.maxResults)
+
             // Close the object detector and release resources
             backgroundExecutor.execute { objectDetectorHelper.clearObjectDetector() }
         }
-
     }
 
     override fun onDestroyView() {
@@ -134,7 +133,6 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                     context = requireContext(),
                     threshold = viewModel.currentThreshold,
                     currentDelegate = viewModel.currentDelegate,
-                    currentModel = viewModel.currentModel,
                     maxResults = viewModel.currentMaxResults,
                     objectDetectorListener = this,
                     runningMode = RunningMode.LIVE_STREAM
@@ -169,7 +167,7 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
 
         // When clicked, raise detection score threshold floor
         fragmentCameraBinding.bottomSheetLayout.thresholdPlus.setOnClickListener {
-            if (objectDetectorHelper.threshold <= 0.8) {
+            if (objectDetectorHelper.threshold <= 0.5) {
                 objectDetectorHelper.threshold += 0.1f
                 updateControlsUi()
             }
@@ -218,11 +216,6 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                 }
             }
 
-        // When clicked, change the underlying model used for object detection
-        fragmentCameraBinding.bottomSheetLayout.spinnerModel.setSelection(
-            viewModel.currentModel,
-            false
-        )
         fragmentCameraBinding.bottomSheetLayout.spinnerModel.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(
@@ -231,18 +224,16 @@ class CameraFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                     p2: Int,
                     p3: Long
                 ) {
-                    try {
-                        objectDetectorHelper.currentModel = p2
-                        updateControlsUi()
-                    } catch(e: UninitializedPropertyAccessException) {
-                        Log.e(TAG, "ObjectDetectorHelper has not been initialized yet.")
-                    }
+                    // Remove this part since the model is fixed now
+                    // objectDetectorHelper.currentModel = p2
+                    updateControlsUi()
                 }
 
                 override fun onNothingSelected(p0: AdapterView<*>?) {
                     /* no op */
                 }
             }
+
     }
 
     // Update the values displayed in the bottom sheet. Reset detector.

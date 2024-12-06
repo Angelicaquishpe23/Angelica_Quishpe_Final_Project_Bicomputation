@@ -117,7 +117,7 @@ class GalleryFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
 
         // When clicked, raise detection score threshold floor
         fragmentGalleryBinding.bottomSheetLayout.thresholdPlus.setOnClickListener {
-            if (viewModel.currentThreshold <= 0.8) {
+            if (viewModel.currentThreshold <= 0.5) {
                 viewModel.setThreshold(viewModel.currentThreshold + 0.1f)
                 updateControlsUi()
             }
@@ -163,11 +163,6 @@ class GalleryFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                 }
             }
 
-        // When clicked, change the underlying model used for object detection
-        fragmentGalleryBinding.bottomSheetLayout.spinnerModel.setSelection(
-            viewModel.currentModel,
-            false
-        )
         fragmentGalleryBinding.bottomSheetLayout.spinnerModel.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(
@@ -176,14 +171,16 @@ class GalleryFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                     p2: Int,
                     p3: Long
                 ) {
-                    viewModel.setModel(p2)
-                    updateControlsUi()
+                    // This part is no longer needed
+                    // viewModel.setModel(p2)
+                    updateControlsUi() // You can still update the UI, but model change is not needed
                 }
 
                 override fun onNothingSelected(p0: AdapterView<*>?) {
-                    /* no op */
+                    /* no-op */
                 }
             }
+
     }
 
     // Update the values displayed in the bottom sheet. Reset detector.
@@ -209,6 +206,9 @@ class GalleryFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
         setUiEnabled(false)
         backgroundExecutor = Executors.newSingleThreadScheduledExecutor()
         updateDisplayView(MediaType.IMAGE)
+
+        Log.d(TAG, "Starting image load") // Log added for debugging
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val source = ImageDecoder.createSource(
                 requireActivity().contentResolver,
@@ -225,18 +225,18 @@ class GalleryFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
             ?.let { bitmap ->
                 fragmentGalleryBinding.imageResult.setImageBitmap(bitmap)
 
+                Log.d(TAG, "Running object detection on image") // Log added to confirm detection is starting
+
                 // Run object detection on the input image
                 backgroundExecutor.execute {
-
                     objectDetectorHelper =
                         ObjectDetectorHelper(
                             context = requireContext(),
                             threshold = viewModel.currentThreshold,
                             currentDelegate = viewModel.currentDelegate,
-                            currentModel = viewModel.currentModel,
                             maxResults = viewModel.currentMaxResults,
-                            runningMode = RunningMode.IMAGE,
-                            objectDetectorListener = this
+                            objectDetectorListener = this,
+                            runningMode = RunningMode.IMAGE
                         )
 
                     objectDetectorHelper.detectImage(bitmap)
@@ -285,10 +285,9 @@ class GalleryFragment : Fragment(), ObjectDetectorHelper.DetectorListener {
                     context = requireContext(),
                     threshold = viewModel.currentThreshold,
                     currentDelegate = viewModel.currentDelegate,
-                    currentModel = viewModel.currentModel,
                     maxResults = viewModel.currentMaxResults,
-                    runningMode = RunningMode.VIDEO,
-                    objectDetectorListener = this
+                    objectDetectorListener = this,
+                    runningMode = RunningMode.LIVE_STREAM
                 )
 
             activity?.runOnUiThread {
